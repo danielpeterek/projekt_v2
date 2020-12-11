@@ -23,6 +23,7 @@ const char* password = "PIDD57361";
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
 MD_Parola DotMatrix = MD_Parola(HARDWARE_TYPE, DATA_PIN, CLK_PIN, CS_PIN, MAX_DEVICES);
+//NTPClient timeClient(ntpUDP, "192.168.1.1", 3600, 60000);
 
 uint8_t scrollSpeed = 50;
 textEffect_t scrollEffect = PA_SCROLL_LEFT;
@@ -65,7 +66,7 @@ void setup()
   timeClient.begin();
   timeClient.setTimeOffset(3600); // offset čas v sekundách, GMT = 3600
 
-  DotMatrix.displayText("ESP hodiny", scrollAlign, scrollSpeed, scrollPause, scrollEffect, scrollEffect);
+  DotMatrix.displayText("ESP Hodiny - Daniel Peterek", scrollAlign, 70, scrollPause, scrollEffect, scrollEffect);
   displayMode = DATE;
 }
 
@@ -93,7 +94,7 @@ void loop()
     month = monthArray[month.toInt() - 1];
     date = formattedDate.substring(8, 10);
     date = String(date.toInt());
-    dateStamp = year + ", " + date + month;
+    dateStamp =  date + "." + month + year;
     dateStamp.toCharArray(dateBuffer, dateStamp.length()+1);
     
     // výpis času
