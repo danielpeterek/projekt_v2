@@ -7,6 +7,11 @@
 #include <SPI.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
+#include <ESPAsyncWebServer.h>
+#include <ESPAsyncTCP.h>
+
+#include <LittleFS.h>
+#include <FS.h>
 
 // Definice hardware typu, počtu matic, output pinu:
 #define HARDWARE_TYPE MD_MAX72XX::FC16_HW
@@ -22,8 +27,9 @@ const char* password = "PIDD57361";
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
-MD_Parola DotMatrix = MD_Parola(HARDWARE_TYPE, DATA_PIN, CLK_PIN, CS_PIN, MAX_DEVICES);
 //NTPClient timeClient(ntpUDP, "192.168.1.1", 3600, 60000);
+MD_Parola DotMatrix = MD_Parola(HARDWARE_TYPE, DATA_PIN, CLK_PIN, CS_PIN, MAX_DEVICES);
+AsyncWebServer server(80); //port 80
 
 uint8_t scrollSpeed = 50;
 textEffect_t scrollEffect = PA_SCROLL_LEFT;
@@ -42,6 +48,7 @@ String monthArray[12] = {
   " Led ", " Uno ", " Bre ", " Dub ", " Kve ", " Cvn ",
   " Cvc ", " Srp ", " Zar ", " Rij ", " Lis ", " Pro "
 };
+
 enum {TIME, DATE};
 boolean displayMode = TIME;
 
@@ -63,8 +70,19 @@ void setup()
   DotMatrix.begin();
   DotMatrix.setIntensity(0);
 
+  if(!LittleFS.begin()){
+      Serial.println("An Error has occurred while mounting SPIFFS");
+      return;
+  }
+
+  server.on("/html", HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(LittleFS, "/index.html", String());
+  });
+
+  server.begin();
+
   timeClient.begin();
-  timeClient.setTimeOffset(3600); // offset čas v sekundách, GMT = 3600
+  timeClient.setTimeOffset(3600); // offset čas v sekundách, GMT + 1 = 3600
 
   DotMatrix.displayText("ESP Hodiny - Daniel Peterek", scrollAlign, 70, scrollPause, scrollEffect, scrollEffect);
   displayMode = DATE;
@@ -108,10 +126,7 @@ void loop()
     else if (hour.toInt() < 13) {
       hour = String(hour.toInt());
     }
-    else {
-      hour = String(hour.toInt() - 12);
-    }
-
+   
     if (second.toInt() == 0) {
       displayMode = DATE;
       DotMatrix.displayClear();
