@@ -10,7 +10,7 @@
 #include <ESPAsyncWebServer.h>
 #include <ESPAsyncTCP.h>
 
-#include <LittleFS.h>
+//#include <LittleFS.h>
 #include <FS.h>
 
 // Definice hardware typu, počtu matic, output pinu:
@@ -70,13 +70,13 @@ void setup()
   DotMatrix.begin();
   DotMatrix.setIntensity(0);
 
-  if(!LittleFS.begin()){
+  if(!SPIFFS.begin()){
       Serial.println("An Error has occurred while mounting SPIFFS");
       return;
   }
 
   server.on("/html", HTTP_GET, [](AsyncWebServerRequest *request){
-      request->send(LittleFS, "/index.html", String());
+      request->send(SPIFFS, "/index.html", String());
   });
 
   server.begin();
