@@ -40,6 +40,7 @@ long currentMillis = 0;
 long previousMillis = 0;
 int interval = 1000;
 
+String text = "";
 String formattedDate;
 String timeStamp, hour, minute, second;
 String dateStamp, year, month, date;
@@ -75,8 +76,18 @@ void setup()
       return;
   }
 
-  server.on("/html", HTTP_GET, [](AsyncWebServerRequest *request){
-      request->send(SPIFFS, "/index.html", String());
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/index.html", String());
+  });
+
+  server.on("/text", HTTP_POST, [](AsyncWebServerRequest *request) {    
+    text = request->arg("text").c_str(); 
+    Serial.println(text);
+    request->send_P(200, "text/json", "{\"result\":\"ok\"}");
+  });
+
+  server.on("/index.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/js/index.js", String());
   });
 
   server.begin();
@@ -142,6 +153,7 @@ void loop()
     
     DotMatrix.setTextAlignment(PA_CENTER);
     DotMatrix.print(timeStamp);
+    //DotMatrix.print(text);
   }
 }
 
