@@ -9,8 +9,6 @@
 #include <WiFiClient.h>
 #include <ESPAsyncWebServer.h>
 #include <ESPAsyncTCP.h>
-
-//#include <LittleFS.h>
 #include <FS.h>
 
 // Definice hardware typu, počtu matic, output pinu:
@@ -24,6 +22,9 @@
 //konfigurace internetu
 const char* ssid     = "Skynet";    
 const char* password = "PIDD57361";
+
+//const char* ssid     = "mojewi";
+//const char* password = "12345678";
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
@@ -49,8 +50,9 @@ String monthArray[12] = {
   " Led ", " Uno ", " Bre ", " Dub ", " Kve ", " Cvn ",
   " Cvc ", " Srp ", " Zar ", " Rij ", " Lis ", " Pro "
 };
+byte mode = 0;
 
-enum {TIME, DATE};
+enum {TIME, DATE, TEXT};
 boolean displayMode = TIME;
 
 void setup()
@@ -83,11 +85,19 @@ void setup()
   server.on("/text", HTTP_POST, [](AsyncWebServerRequest *request) {    
     text = request->arg("text").c_str(); 
     Serial.println(text);
+    mode = 1;
+    displayMode = TEXT;
     request->send_P(200, "text/json", "{\"result\":\"ok\"}");
   });
 
   server.on("/index.js", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/js/index.js", String());
+  });
+
+  server.on("/clock", HTTP_POST, [](AsyncWebServerRequest *request){
+    mode = 0;
+    displayMode = TIME;
+    request->send(200, "text/json", "{\"result\":\"ok\"}");
   });
 
   server.begin();
@@ -152,8 +162,16 @@ void loop()
     }
     
     DotMatrix.setTextAlignment(PA_CENTER);
-    DotMatrix.print(timeStamp);
+    //DotMatrix.print(timeStamp);
     //DotMatrix.print(text);
+    if(mode == 0){
+      displayMode = TIME;
+      DotMatrix.print(timeStamp);
+    }
+    else if(mode == 1){
+      displayMode = TEXT;
+      DotMatrix.displayText(text.c_str(), scrollAlign, scrollSpeed, scrollPause, scrollEffect, scrollEffect);
+    }
   }
 }
 
