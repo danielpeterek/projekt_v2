@@ -8,4 +8,4 @@
 - LED matice MAX7219
 
 ## Software
--Visual Studio Code - PlatformIO
+- Visual Studio Code - PlatformIO
