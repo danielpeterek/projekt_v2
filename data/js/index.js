@@ -1,7 +1,7 @@
 var mode = 0;
 
-var diakritika = "ščřžěňďťĚŠČŘŽĚŇĎŤ";
-var noDiakritika = "scrzendtESCRZENDT";
+var diakritika = "ščřžěňďťůĚŠČŘŽĚŇĎŤŮ";
+var noDiakritika = "scrzendtuESCRZENDTU";
 
 function convertDiakritika(str){
     var result = "";

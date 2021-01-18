@@ -12,7 +12,7 @@
 #include <FS.h>
 
 // Definice hardware typu, počtu matic, output pinu:
-#define HARDWARE_TYPE MD_MAX72XX::FC16_HW
+#define HARDWARE_TYPE MD_MAX72XX::FC16_HW //kaskádový styl matice
 #define MAX_DEVICES 4
 #define CS_PIN 4
 #define DATA_PIN 13
@@ -40,6 +40,7 @@ byte utf8ascii(byte ascii) {
     }
     return  (0);                                     // jinak: vrátit nulu, pokud je třeba znak ignorovat
 }
+
 // převedení String objektu z UTF8 String na Extended ASCII
 String utf8ascii(String s){      
     String r="";
@@ -50,6 +51,7 @@ String utf8ascii(String s){
     }
     return r;
 }
+
 // v místě převodu UTF8-string na Extended ASCII (ASCII je kratší!)
 void utf8ascii(char* s){      
     int k=0;
@@ -64,11 +66,8 @@ void utf8ascii(char* s){
 
 
 //konfigurace internetu
-const char* ssid     = "Skynet";    
-const char* password = "PIDD57361";
-
-//const char* ssid     = "mojewi";
-//const char* password = "12345678";
+const char* ssid     = "****";    
+const char* password = "****";
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
@@ -76,10 +75,11 @@ NTPClient timeClient(ntpUDP);
 MD_Parola DotMatrix = MD_Parola(HARDWARE_TYPE, DATA_PIN, CLK_PIN, CS_PIN, MAX_DEVICES);
 AsyncWebServer server(80); //port 80
 
+//parametry displeje
 uint8_t scrollSpeed = 50;
 textEffect_t scrollEffect = PA_SCROLL_LEFT;
 textPosition_t scrollAlign = PA_LEFT;
-uint16_t scrollPause = 3000; // milisekundy
+uint16_t scrollPause = 3000; //v milisekundách
 
 long currentMillis = 0;
 long previousMillis = 0;
@@ -117,21 +117,6 @@ void showTime(){
     second = formattedDate.substring(17, 19);
 }
 
-void dateSec(){
-  if (second.toInt() == 0) { //pokud se sekundy rovnají nule, vypíše se aktuální datum
-      displayMode = DATE;
-      DotMatrix.displayClear();
-      DotMatrix.displayText(dateBuffer, scrollAlign, scrollSpeed, scrollPause, scrollEffect, scrollEffect); //výpis data
-      return;
-    }
-    else if (second.toInt() % 2) { //pokud je sekunda lichá, vypíše dvojtečku
-      timeStamp = hour + ":" + minute;
-    }
-    else { //pokud je sudá, nevypíše dvojtečku
-      timeStamp = hour + " " + minute;
-    }
-}
-
 void setup()
 {
   Serial.begin(115200);
@@ -147,7 +132,7 @@ void setup()
   Serial.println("IP adresa: ");
   Serial.println(WiFi.localIP());
 
-  DotMatrix.begin();
+  DotMatrix.begin(); // vyvolání matice
   DotMatrix.setIntensity(0); //jas matice
 
   if(!SPIFFS.begin()){
@@ -180,7 +165,7 @@ void setup()
 
   server.begin();
 
-  timeClient.begin();
+  timeClient.begin(); //vyvolání NTP klientu
   timeClient.setTimeOffset(3600); // offset čas v sekundách, GMT + 1 = 3600
 
   DotMatrix.displayText("ESP", scrollAlign, 70, scrollPause, scrollEffect, scrollEffect);
@@ -191,7 +176,7 @@ void loop()
 {
   while (!timeClient.update()) {
     timeClient.forceUpdate();
-  }
+  } //platný datum a čas
 
   if (displayMode == DATE && DotMatrix.displayAnimate()) {
     DotMatrix.displayReset();
@@ -202,8 +187,8 @@ void loop()
   if (currentMillis - previousMillis > interval &&
       displayMode == TIME) {
     previousMillis = millis();
-    formattedDate = timeClient.getFormattedDate();
-    Serial.println(formattedDate);
+    formattedDate = timeClient.getFormattedDate(); //převedení data a času a čitelný formát
+    Serial.println(formattedDate); //výpis převedeného času
 
     showDate();
     showTime();
@@ -215,11 +200,21 @@ void loop()
       hour = String(hour.toInt());
     }
    
-    dateSec();
+    if (second.toInt() == 0) { //pokud se sekundy rovnají nule, vypíše se aktuální datum
+      displayMode = DATE;
+      DotMatrix.displayClear();
+      DotMatrix.displayText(dateBuffer, scrollAlign, scrollSpeed, scrollPause, scrollEffect, scrollEffect); //výpis data
+      return;
+    }
+    else if (second.toInt() % 2) { //pokud je sekunda lichá, vypíše dvojtečku
+      timeStamp = hour + ":" + minute;
+    }
+    else { //pokud je sudá, nevypíše dvojtečku
+      timeStamp = hour + " " + minute;
+    }
     
-    DotMatrix.setTextAlignment(PA_CENTER);
-    //DotMatrix.print(timeStamp);
-    //DotMatrix.print(text);
+    DotMatrix.setTextAlignment(PA_CENTER); //zarovnání času uprostřed
+
     if(mode == 0){
       displayMode = TIME;
       DotMatrix.print(timeStamp); //výpis času
@@ -230,4 +225,3 @@ void loop()
     }
   }
 }
-
